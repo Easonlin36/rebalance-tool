@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全能資產配置與網格回測實戰系統 V24</title>
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+            --primary: #3498db;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --info: #95a5a6;
+            --border-color: #404040;
+            --guide-bg: #1e272e;
+            --preview-bg: #222a30;
+            
+            /* 翡翠綠與星空藍配置分流 */
+            --input-base-green: #112515;
+            --text-base-green: #5ade71;
+            --input-trade-blue: #142538;
+            --text-trade-blue: #5ade7b;
+            --sandbox-color: #e67e22;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { width: 100%; max-width: 1150px; }
+        h1 { text-align: center; color: var(--primary); margin-bottom: 25px; }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        /* 導覽 SOP 專用樣式 */
+        .guide-card {
+            background-color: var(--guide-bg);
+            border-left: 6px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        .guide-title { font-weight: bold; color: var(--primary); font-size: 1.2rem; margin-bottom: 12px; }
+        
+        /* 質感高階摺疊按鈕 */
+        .toggle-guide-btn {
+            background: rgba(52, 152, 219, 0.08);
+            color: var(--primary);
+            border: 1px solid rgba(52, 152, 219, 0.25);
+            border-radius: 4px;
+            padding: 6px 14px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 12px;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s;
+            width: auto;
+        }
+        .toggle-guide-btn:hover {
+            background: rgba(52, 152, 219, 0.15);
+            border-color: var(--primary);
+        }
+
+        .step-box { display: grid; grid-template-columns: 1fr; gap: 12px; border-top: 1px solid #334155; padding-top: 15px; margin-top: 12px;}
+        .step-item { background: rgba(255,255,255,0.01); border-radius: 6px; padding: 12px; border: 1px solid #334155; }
+        
+        /* 🌟 徹底重構的「數位科技小方塊」標籤，全面消滅大眼珠 */
+        .badge-stamp { 
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px; /* 硬朗圓角方塊 */
+            font-size: 0.82rem;
+            font-weight: bold;
+            margin-right: 6px;
+            vertical-align: middle;
+            background: #34495e;
+            color: #fff;
+            border: 1px solid #566573;
+        }
+        .badge-stamp-warning { background: var(--sandbox-color); color: #fff; border: 1px solid #d35400; }
+        .badge-stamp-success { background: #145c1a; color: #5ade71; border: 1px solid #196f3d; }
+        .badge-stamp-primary { background: #1b4f72; color: #5dade2; border: 1px solid #21618c; }
+
+        .adv-box { background-color: #2c251e; border: 1px solid var(--warning); border-radius: 6px; padding: 12px; margin-top: 12px; }
+        .adv-title { color: var(--warning); font-weight: bold; margin-bottom: 5px; }
+        .highlight-text { color: var(--warning); font-weight: bold; }
+
+        .card-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; color: var(--primary); }
+        .warning-banner { background-color: #5c4308; color: #fff; padding: 12px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; font-size: 0.95rem; border: 1px solid var(--warning); }
+
+        .sandbox-toggle-box {
+            background-color: #1e2022; border: 1px solid #555; border-radius: 6px; padding: 10px 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-weight: bold; color: #ccc; font-size: 0.9rem;
+        }
+        .sandbox-toggle-box input[type="checkbox"] { width: 18px; height: 20px; cursor: pointer; }
+
+        /* 帳簿表格 RWD 優化 */
+        .asset-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 0.95rem; }
+        .asset-table th, .asset-table td { padding: 10px 5px; border: 1px solid var(--border-color); text-align: center; }
+        .asset-table th { background-color: #222; color: var(--text-muted); font-size: 0.85rem; }
+        
+        .asset-table input { width: 100%; padding: 8px 4px; border-radius: 4px; border: 1px solid #555; background-color: #111; color: #fff; text-align: center; box-sizing: border-box; font-size: 0.95rem; }
+        .asset-table input.name-input { background-color: transparent; border: 1px dashed var(--primary); color: var(--primary); font-weight: bold; font-size: 0.95rem; }
+        
+        /* 欄位 A 與 B 的色彩鮮明分流 */
+        .asset-table input.base-stock-input { background-color: var(--input-base-green); color: var(--success); font-weight: bold; border: 1px solid #145c1a; }
+        .asset-table input.trade-stock-input { background-color: var(--input-trade-blue); color: var(--warning); font-weight: bold; border: 1px solid var(--primary); }
+        .asset-table input.ratio-input { color: var(--warning); font-weight: bold; border: 1px solid #775200; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        .btn-box { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 12px; background-color: var(--primary); color: #fff; border: none; border-radius: 5px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background-color: #2980b9; }
+        button.btn-save { background-color: #8e44ad; }
+        button.btn-save:hover { background-color: #7d3c98; }
+        button.btn-reset { background-color: #566573; }
+        button.btn-reset:hover { background-color: #2c3e50; }
+
+        button.btn-success { background-color: var(--success); width: 100%; }
+        button.btn-success:hover { background-color: #27ae60; }
+        
+        button.btn-init { background-color: #ca6f1e; width: 48%; padding: 10px; font-size: 0.95rem; margin-bottom: 10px;}
+        button.btn-init:hover { background-color: #b05f1a; }
+        button.btn-fill-trade { background-color: #2e4053; width: 48%; padding: 10px; font-size: 0.95rem; margin-bottom: 10px; color:#fff; border:1px solid #566573;}
+        button.btn-fill-trade:hover { background-color: #212f3d; }
+        
+        button.btn-settle { background-color: #d35400; width: 100%; padding: 14px; font-size: 1.05rem; margin-top: 10px; border: 1px solid #b9770e; }
+        button.btn-settle:hover { background-color: #ba4a00; }
+
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .result-grid { grid-template-columns: 1fr; } }
+        .result-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #3d3d3d; }
+        
+        .badge { padding: 4px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem; }
+        .badge-none { background-color: var(--info); color: #fff; }
+        .badge-buy { background-color: var(--success); color: #fff; }
+        .badge-sell { background-color: var(--danger); color: #fff; }
+
+        .advice-box { margin-top: 15px; padding: 15px; border-radius: 6px; background-color: #111; font-size: 0.95rem; line-height: 1.6; border-left: 4px solid var(--primary); }
+
+        table.history-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        table.history-table th, table.history-table td { padding: 10px 6px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        table.history-table th { background-color: #222; color: var(--text-muted); }
+
+        .text-up { color: var(--success); font-weight: bold; }
+        .text-down { color: var(--danger); font-weight: bold; }
+        .text-none { color: var(--text-muted); }
+        
+        button.btn-delete { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.8rem; border-radius: 3px; }
+        button.btn-delete:hover { background-color: var(--danger); color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>全能資產配置與網格回測實戰系統</h1>
+
+    <!-- 摺疊 SOP 指南面板 -->
+    <div class="guide-card">
+        <div class="guide-title">📋 全能資產配置與網格回測系統—操作指南</div>
+        <div style="color:#cbd5e1; font-size:0.9rem; margin-bottom: 12px;">
+            🔒 <b>資料隱私宣告：</b>所有資產數據與記帳紀錄「100% 儲存在您的手機或電腦瀏覽器中」，絕不上傳伺服器，安全私密。
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.03); padding:12px; border-radius:6px; border:1px solid #334155; font-size:0.92rem;">
+            <b>🎯 本系統之核心設計目的與運用：</b><br>
+            1. <b>紀律操盤：</b>排除人性情緒干擾。設定好「再平衡偏移門檻%」與「當日現價」，系統會純理性客觀地提示您何時該加碼抄底、何時該減碼獲利。<br>
+            2. <b>決策輔助：</b>適用於長線原型股、正二槓桿 ETF 的資產配置，亦可縮小門檻 % 轉化為個股的波段網格操作。在市場上下洗盤的「橫盤震盪區間」運用效果更佳，能有效幫您收割波動利潤。
+        </div>
+
+        <!-- 延伸控制按鈕 -->
+        <button id="guideToggleBtn" class="toggle-guide-btn" onclick="toggleGuideContent()">🗂️ 展開詳細實戰步驟與回測 SOP 指南 ➔</button>
+
+        <!-- 摺疊抽屜主體 -->
+        <div id="collapsibleGuide" style="display: none;">
+            <div class="step-box">
+                <div class="step-item">
+                    <b style="color:var(--primary);">🏁 步驟一：初始配置與一鍵開局 (沙盒環境建立)</b><br>
+                    1. 在下方輸入您的「計畫投入初始總本金」與各資產的 <span class="badge-stamp badge-stamp-warning">1</span><b>預計比例(%)</b>（確認上方提示條亮起 ✅綠燈100%）。<br>
+                    2. 點選橘色的 <b>【🔄 依計畫總本金一鍵分配初始原庫存】</b> 按鈕。<br>
+                    3. <b>開局效果：</b>系統會全自動將總本金換算成標準股數與賸餘現金，一秒填滿 <span class="badge-stamp badge-stamp-success">3</span><b>【A】原持股庫存（翡翠綠欄位）</b>，乾淨俐落完成初始開局！
+                </div>
+                
+                <div class="step-item">
+                    <b style="color:var(--primary);">🚀 步驟二：依您的使用情境，選擇以下二種流程操作</b><br>
+                    <b style="color:var(--success);">情境 A：【日常實盤資產診斷】（控盤對帳）</b><br>
+                    1. 固定一段時間（如月底或市場大震盪時），在表格中更新各股票的 <span class="badge-stamp badge-stamp-warning">2</span><b>「當日現價」</b>。<br>
+                    2. 觀察整體策略執行狀態（診斷報告）：輸入股價後系統下方的診斷會有加碼或提醒。<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;* 隨著股價跳動，區塊 2 的「目前整體 Beta」會偏離原點。您可以同步觀察貼心算好的「🟢 買進加碼臨界點」與「🔴 賣出減碼臨界點」。<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;* 如果整體 Beta 依然在上下限之內，執行狀態會顯示灰色 <b>【安全觀望-不需再平衡】</b>，代表容許範圍內，無需進行任何交易，直接關閉網頁即可。<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;* 💡 操盤手備忘錄：臨界點數值純屬系統建議，您在實戰中依然擁有 100% 自主權，可自行決定是否要加碼或賣出。<br>
+                    3. 若觸發提醒：點選灰色按鈕，系統會自動將建議零股填入 <span class="badge-stamp badge-stamp-primary">4</span><b>【B】本日實際交易（深藍框）</b>，自動試算交易後的交割款餘額。<br><br>
+                    
+                    <b style="color:var(--sandbox-color);">情境 B：【過去歷史行情回測】（成效驗證）</b><br>
+                    1. 自訂您想測試的資產代號（如改寫為台積電），並在 <span class="badge-stamp badge-stamp-warning">5</span><b>【紀錄日期】</b> 直接打字輸入您想回測的歷史時間（如打入：2020/03/19）。<br>
+                    2. 在 <span class="badge-stamp badge-stamp-warning">2</span><b>當日現價</b> 填入當年的歷史股價，系統下方診斷隨即跳出加碼或提醒。<br>
+                    3. 點選灰色按鈕 <b>【⚡ 依照系統建議自動填入本日實際交易】</b>，數據即刻帶入。<br>
+                    4. 點選大橘色按鈕 <b>【💾 確定今天已下單：一鍵結算本日交易】</b>，系統會將當時的現價成本基期與資產狀態永久寫入下方的「歷史紀錄表」。<br>
+                    5. <b>看成績：</b>重複輸入多筆歷史日期與現價並完成結算後，下方大帳本最右側呈現的<b>「累積總損益」與「累積報酬率」</b>，就是這套策略幫您跑出來的真實回測戰績！
+                </div>
+            </div>
+
+            <div class="adv-box">
+                <div class="adv-title">🌟 進階玩法轉化提點</div>
+                <div style="color:#ddd; font-size:0.9rem;">
+                    只要將矩陣內資產改名為您關注的個股，並將該標的的<b>「槓桿」改為 1</b>，同時將<b>「再平衡偏移門檻」調降至 3% ~ 5%</b>。系統瞬間就會轉化為高周轉率的<b>「個股網格波段收割機」</b>！
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 區塊一：核心策略與資產會計矩陣設定 -->
+    <div class="card">
+        <div class="card-title">1. 策略參數與資產會計矩陣設定</div>
+        
+        <div id="ratioWarning" class="warning-banner">💡 提示：請確認預計配置比例加總等於 100%</div>
+
+        <div class="sandbox-toggle-box">
+            <input type="checkbox" id="sandboxMode" checked onchange="triggerSandboxSync()">
+            <label for="sandboxMode">🔄 啟用「沙盒開局自動連動」模式（開啟時：更動上方總本金或比例，下方翡翠綠原庫存將自動等比例秒刷新）</label>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="initCapital">計畫投入初始總本金 (元)</label>
+                <input type="number" id="initCapital" value="180000" oninput="onCapitalOrRatioInput()">
+            </div>
+            <div class="form-group">
+                <label for="betaOffset">再平衡偏移門檻 (%)</label>
+                <input type="number" id="betaOffset" value="10" oninput="checkRatiosTotal()">
+            </div>
+        </div>
+
+        <table class="asset-table">
+            <thead>
+                <tr>
+                    <th>自訂資產代號</th>
+                    <th style="width: 105px;"><span class="badge-stamp">1</span>預計比例(%)</th>
+                    <th style="width: 65px;">槓桿</th>
+                    <th style="width: 110px;"><span class="badge-stamp">2</span>當日現價(元)</th>
+                    <th style="background-color: #16351c; color:#5ade71; width:155px;"><span class="badge-stamp badge-stamp-success">3</span>【A】原持股庫存</th>
+                    <th style="background-color: #1b365d; color:var(--warning); width:155px;"><span class="badge-stamp badge-stamp-primary">4</span>【B】本日實際交易</th>
+                    <th style="background-color: #142814; color:var(--success); width:110px;">【A+B】總股數</th>
+                    <th>目前市值 / 實際佔比</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 資產 1 -->
+                <tr>
+                    <td><input type="text" id="name1" class="name-input" value="00631L" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="ratio1" class="ratio-input" value="60" oninput="onCapitalOrRatioInput()"></td>
+                    <td><input type="number" id="lev1" value="2" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="price1" value="35.80" step="0.01" oninput="onPriceInput()"></td>
+                    <td><input type="number" id="shares1_base" class="base-stock-input" value="3000" oninput="onBaseAssetManualInput()"></td>
+                    <td><input type="number" id="shares1_trade" class="trade-stock-input" value="0" placeholder="買+,賣-" oninput="checkRatiosTotal()"></td>
+                    <td id="shares1_total" style="font-weight:bold; color:var(--success);">3,000</td>
+                    <td id="output1" style="font-size:0.85rem; color:var(--text-muted);">--</td>
+                </tr>
+                <!-- 資產 2 -->
+                <tr>
+                    <td><input type="text" id="name2" class="name-input" value="00685L" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="ratio2" class="ratio-input" value="0" oninput="onCapitalOrRatioInput()"></td>
+                    <td><input type="number" id="lev2" value="2" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="price2" value="280.35" step="0.01" oninput="onPriceInput()"></td>
+                    <td><input type="number" id="shares2_base" class="base-stock-input" value="0" oninput="onBaseAssetManualInput()"></td>
+                    <td><input type="number" id="shares2_trade" class="trade-stock-input" value="0" placeholder="買+,賣-" oninput="checkRatiosTotal()"></td>
+                    <td id="shares2_total" style="font-weight:bold; color:var(--success);">0</td>
+                    <td id="output2" style="font-size:0.85rem; color:var(--text-muted);">--</td>
+                </tr>
+                <!-- 資產 3 -->
+                <tr>
+                    <td><input type="text" id="name3" class="name-input" value="QLD" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="ratio3" class="ratio-input" value="0" oninput="onCapitalOrRatioInput()"></td>
+                    <td><input type="number" id="lev3" value="2" oninput="checkRatiosTotal()"></td>
+                    <td><input type="number" id="price3" value="91.77" step="0.01" oninput="onPriceInput()"></td>
+                    <td><input type="number" id="shares3_base" class="base-stock-input" value="0" oninput="onBaseAssetManualInput()"></td>
+                    <td><input type="number" id="shares3_trade" class="trade-stock-input" value="0" placeholder="買+,賣-" oninput="checkRatiosTotal()"></td>
+                    <td id="shares3_total" style="font-weight:bold; color:var(--success);">0</td>
+                    <td id="output3" style="font-size:0.85rem; color:var(--text-muted);">--</td>
+                </tr>
+                <!-- 現金部位 -->
+                <tr style="background-color:#1a1a1a;">
+                    <td style="font-weight:bold; color:var(--success);">交割戶現金</td>
+                    <td><input type="number" id="ratioCash" class="ratio-input" value="40" oninput="onCapitalOrRatioInput()" style="border:1px solid var(--success); color:var(--success);"></td>
+                    <td style="color:var(--text-muted);">0</td>
+                    <td style="color:var(--text-muted);">--</td>
+                    <td><input type="number" id="currentCash_base" class="base-stock-input" value="72597" oninput="onBaseAssetManualInput()" style="color:var(--success);"></td>
+                    <td id="currentCash_trade" style="color:var(--warning); font-weight:bold; font-size:0.9rem;">0</td>
+                    <td id="currentCash_total" style="font-weight:bold; color:var(--success);">72,597</td>
+                    <td id="outputCash" style="font-size:0.85rem; color:var(--text-muted);">--</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="display:flex; justify-content:space-between; width:100%;">
+            <button class="btn-init" onclick="initializeAssetsFromCapital(true)">🔄 依計畫總本金一鍵分配初始[原庫存]</button>
+            <button class="btn-fill-trade" onclick="autoFillSuggestedTrades()">⚡ 依照系統建議自動填入[本日實際交易]</button>
+        </div>
+
+        <!-- 交易成本參數 -->
+        <div style="font-size:0.85rem; color:var(--text-muted); display:flex; gap:15px; justify-content:flex-end; padding-right:5px; margin-top:5px;">
+            <span>手續費折扣: <input type="number" id="brokerDiscount" value="6.0" style="width:40px; padding:2px; font-size:0.8rem; background:#111; color:#fff; border:1px solid #444; text-align:center;" oninput="checkRatiosTotal()"> 折</span>
+            <span>最低手續費: <input type="number" id="minFee" value="20" style="width:40px; padding:2px; font-size:0.8rem; background:#111; color:#fff; border:1px solid #444; text-align:center;" oninput="checkRatiosTotal()"> 元</span>
+            <span>ETF稅率: <input type="number" id="taxRate" value="0.1" style="width:45px; padding:2px; font-size:0.8rem; background:#111; color:#fff; border:1px solid #444; text-align:center;" oninput="checkRatiosTotal()"> %</span>
+        </div>
+
+        <div class="btn-box">
+            <button class="btn-reset" onclick="resetTradesAndRefresh()">🧹 清空本日交易與重置面板</button>
+            <button class="btn-save" onclick="saveCurrentSettings()">💾 儲存目前數據與配置陣列</button>
+        </div>
+    </div>
+
+    <!-- 區塊二：即時診斷報告 -->
+    <div class="card">
+        <div class="card-title">2. 即時投組加權診斷報告 (含交易前後對比預覽)</div>
+        <div class="result-grid">
+            <div>
+                <div class="result-item"><span>原資產總價值 (交易前)：</span><span id="resTotalAssetBase">--</span></div>
+                <div class="result-item"><span>最新資產價值 (交易後預估)：</span><span id="resTotalAssetTotal" style="font-weight: bold; color: var(--primary); font-size:1.15rem;">--</span></div>
+                <div class="result-item"><span>設計目標組合 Beta 值：</span><span id="resTargetBeta" style="color:var(--warning); font-weight:bold;">--</span></div>
+            </div>
+            <div>
+                <div class="result-item"><span>目前整體 Beta (交易前)：</span><span id="resCurrentBetaBase">--</span></div>
+                <div class="result-item"><span>最新整體 Beta (交易後預估)：</span><span id="resCurrentBetaTotal" style="font-weight:bold; color:var(--success);">--</span></div>
+                <div class="result-item"><span>🟢 買進加碼臨界點 (Beta 下限)：</span><span id="resLowerBeta" style="color:var(--success); font-weight:bold;">--</span></div>
+                <div class="result-item"><span>🔴 賣出減碼臨界點 (Beta 上限)：</span><span id="resUpperBeta" style="color:var(--danger); font-weight:bold;">--</span></div>
+            </div>
+        </div>
+        <div class="result-item" style="margin-top: 10px; border-top:1px solid #444; padding-top:10px;">
+            <span style="font-size:1.05rem;">整體策略執行狀態：</span><span id="resAction">--</span>
+        </div>
+
+        <!-- 系統精確零股提示指南 -->
+        <div id="rebalanceAdvice" class="advice-box" style="display:none;"></div>
+        
+        <!-- 紀錄日期文字框 -->
+        <div style="margin-top: 20px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+            <label for="journalDate" style="color: var(--text-color); font-size: 0.95rem; font-weight: bold;"><span class="badge-stamp badge-stamp-warning">5</span>📅 紀錄日期：</label>
+            <input type="text" id="journalDate" placeholder="YYYY/MM/DD" style="width: 150px; padding: 6px; border-radius: 4px; border: 1px solid #555; background-color: #111; color: var(--warning); font-weight: bold; text-align: center;">
+            <span style="font-size:0.8rem; color:var(--text-muted);">* 提示：日常對帳免填，回測時可直接打字修改歷史日期</span>
+        </div>
+
+        <!-- 大橘色核心結算按鈕 -->
+        <button id="btnSettleTrades" class="btn-settle" onclick="settleAndSaveJournal()">💾 確定今天已下單：一鍵結算本日交易並轉為全新[原持股庫存]</button>
+
+        <button class="btn-success" id="addLogBtn" onclick="addHistoryLog()" style="display: none; margin-top: 15px;">📊 將當前投組狀態寫入歷史紀錄表</button>
+    </div>
+
+    <!-- 區塊三：歷史紀錄 -->
+    <div class="card">
+        <div class="card-title">3. 多資產成效驗證歷史紀錄表 (含現價成本基期)</div>
+        <div style="overflow-x: auto;">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>紀錄日期</th>
+                        <th id="histName1">資產1 庫存成本</th>
+                        <th id="histName2">資產2 庫存成本</th>
+                        <th id="histName3">資產3 庫存成本</th>
+                        <th>現金餘額</th>
+                        <th>總資產價值</th>
+                        <th>累積總損益</th>
+                        <th>累積報酬率</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="logTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let historyLogs = JSON.parse(localStorage.getItem('multi_rebalance_logs_v22')) || [];
+    let systemSuggestedTrades = [0, 0, 0]; 
+
+    window.onload = function() {
+        let today = new Date();
+        let yyyy = today.getFullYear();
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('journalDate').value = yyyy + '/' + mm + '/' + dd;
+        
+        loadSavedSettings();
+        checkRatiosTotal();
+    };
+
+    function toggleGuideContent() {
+        let content = document.getElementById('collapsibleGuide');
+        let btn = document.getElementById('guideToggleBtn');
+        if (content.style.display === 'none' || content.style.display === '') {
+            content.style.display = 'block';
+            btn.innerText = '收合詳細實戰步驟與回測 SOP 指南 ▴';
+            btn.style.color = 'var(--warning)';
+            btn.style.borderColor = 'var(--warning)';
+            btn.style.background = 'rgba(241, 196, 15, 0.05)';
+        } else {
+            content.style.display = 'none';
+            btn.innerText = '🗂️ 展開詳細實戰步驟與回測 SOP 指南 ➔';
+            btn.style.color = 'var(--primary)';
+            btn.style.borderColor = 'rgba(52, 152, 219, 0.25)';
+            btn.style.background = 'rgba(52, 152, 219, 0.08)';
+        }
+    }
+
+    function onCapitalOrRatioInput() {
+        if (document.getElementById('sandboxMode').checked) {
+            initializeAssetsFromCapital(false); 
+        }
+        checkRatiosTotal();
+    }
+
+    function onPriceInput() {
+        checkRatiosTotal();
+    }
+
+    function onBaseAssetManualInput() {
+        document.getElementById('sandboxMode').checked = false;
+        checkRatiosTotal();
+    }
+
+    function triggerSandboxSync() {
+        if (document.getElementById('sandboxMode').checked) {
+            initializeAssetsFromCapital(false);
+        }
+        checkRatiosTotal();
+    }
+
+    function resetTradesAndRefresh() {
+        document.getElementById('shares1_trade').value = 0;
+        document.getElementById('shares2_trade').value = 0;
+        document.getElementById('shares3_trade').value = 0;
+        checkRatiosTotal();
+    }
+
+    function checkRatiosTotal() {
+        let r1 = parseFloat(document.getElementById('ratio1').value) || 0;
+        let r2 = parseFloat(document.getElementById('ratio2').value) || 0;
+        let r3 = parseFloat(document.getElementById('ratio3').value) || 0;
+        let rCash = parseFloat(document.getElementById('ratioCash').value) || 0;
+        
+        let totalRatio = r1 + r2 + r3 + rCash;
+        let warningBanner = document.getElementById('ratioWarning');
+
+        let n1 = document.getElementById('name1').value || "資產1";
+        let n2 = document.getElementById('name2').value || "資產2";
+        let n3 = document.getElementById('name3').value || "資產3";
+
+        document.getElementById('histName1').innerText = n1 + " 庫存(現價)";
+        document.getElementById('histName2').innerText = n2 + " 庫存(現價)";
+        document.getElementById('histName3').innerText = n3 + " 庫存(現價)";
+
+        if (Math.abs(totalRatio - 100) < 0.02) {
+            warningBanner.innerHTML = `✅ <b>配置比例加總： 正確 (100%)</b> | ${n1}(${r1}%) + ${n2}(${r2}%) + ${n3}(${r3}%) + 現金(${rCash}%)`;
+            warningBanner.style.backgroundColor = "#1d3824";
+            warningBanner.style.borderColor = "var(--success)";
+        } else {
+            warningBanner.innerHTML = `⚠️ <b>配置比例尚未平衡：目前加總為 <span style='color:var(--danger); font-size:1.1rem;'>${totalRatio}%</span></b> (請調整使其等於 100%) | 當前：${n1}(${r1}%) + ${n2}(${r2}%) + ${n3}(${r3}%) + 現金(${rCash}%)`;
+            warningBanner.style.backgroundColor = "#5c4308";
+            warningBanner.style.borderColor = "var(--warning)";
+        }
+        calculateRebalance(r1/100, r2/100, r3/100, rCash/100, n1, n2, n3);
+    }
+
+    function calculateRebalance(r1, r2, r3, rCash, n1, n2, n3) {
+        let initCapital = parseFloat(document.getElementById('initCapital').value) || 0;
+        let betaOffset = parseFloat(document.getElementById('betaOffset').value) / 100 || 0;
+
+        let lev1 = parseFloat(document.getElementById('lev1').value) || 0;
+        let lev2 = parseFloat(document.getElementById('lev2').value) || 0;
+        let lev3 = parseFloat(document.getElementById('lev3').value) || 0;
+
+        let p1 = parseFloat(document.getElementById('price1').value) || 0;
+        let p2 = parseFloat(document.getElementById('price2').value) || 0;
+        let p3 = parseFloat(document.getElementById('price3').value) || 0;
+
+        let s1_base = parseFloat(document.getElementById('shares1_base').value) || 0;
+        let s2_base = parseFloat(document.getElementById('shares2_base').value) || 0;
+        let s3_base = parseFloat(document.getElementById('shares3_base').value) || 0;
+        let cash_base = parseFloat(document.getElementById('currentCash_base').value) || 0;
+
+        let s1_trade = parseFloat(document.getElementById('shares1_trade').value) || 0;
+        let s2_trade = parseFloat(document.getElementById('shares2_trade').value) || 0;
+        let s3_trade = parseFloat(document.getElementById('shares3_trade').value) || 0;
+
+        let discount = parseFloat(document.getElementById('brokerDiscount').value) || 6;
+        let minFeeSetting = parseFloat(document.getElementById('minFee').value) || 20;
+        let taxRateSetting = (parseFloat(document.getElementById('taxRate').value) || 0.1) / 100;
+
+        let s1_total = s1_base + s1_trade;
+        let s2_total = s2_base + s2_trade;
+        let s3_total = s3_base + s3_trade;
+        document.getElementById('shares1_total').innerText = s1_total.toLocaleString();
+        document.getElementById('shares2_total').innerText = s2_total.toLocaleString();
+        document.getElementById('shares3_total').innerText = s3_total.toLocaleString();
+
+        let trades = [
+            { trade: s1_trade, price: p1 },
+            { trade: s2_trade, price: p2 },
+            { trade: s3_trade, price: p3 }
+        ];
+
+        let totalNetCashImpact = 0; 
+        trades.forEach(t => {
+            if (t.trade === 0) return;
+            let rawValue = Math.abs(t.trade) * t.price;
+            let fee = Math.max(Math.round(rawValue * 0.001425 * (discount/10)), minFeeSetting);
+            let tax = (t.trade < 0) ? Math.floor(rawValue * taxRateSetting) : 0;
+            if (t.trade > 0) { totalNetCashImpact += (rawValue + fee); } 
+            else { totalNetCashImpact -= (rawValue - fee - tax); }
+        });
+
+        let cash_total = cash_base - totalNetCashImpact;
+        document.getElementById('currentCash_trade').innerText = (totalNetCashImpact === 0 ? "0" : (totalNetCashImpact > 0 ? "-" : "+") + Math.abs(Math.round(totalNetCashImpact)).toLocaleString() + " 元");
+        document.getElementById('currentCash_trade').className = totalNetCashImpact === 0 ? "text-none" : (totalNetCashImpact > 0 ? "text-down" : "text-up");
+        document.getElementById('currentCash_total').innerText = Math.round(cash_total).toLocaleString();
+
+        let v1_base = s1_base * p1; let v2_base = s2_base * p2; let v3_base = s3_base * p3;
+        let totalAsset_base = v1_base + v2_base + v3_base + cash_base;
+
+        let v1_total = s1_total * p1; let v2_total = s2_total * p2; let v3_total = s3_total * p3;
+        let totalAsset_total = v1_total + v2_total + v3_total + cash_total;
+
+        let currentBeta_base = totalAsset_base > 0 ? ((v1_base * lev1) + (v2_base * lev2) + (v3_base * lev3)) / totalAsset_base : 0;
+        let currentBeta_total = totalAsset_total > 0 ? ((v1_total * lev1) + (v2_total * lev2) + (v3_total * lev3)) / totalAsset_total : 0;
+
+        document.getElementById('output1').innerText = Math.round(v1_total).toLocaleString() + " 元 (" + (totalAsset_total > 0 ? (v1_total/totalAsset_total*100).toFixed(1) : 0) + "%)";
+        document.getElementById('output2').innerText = Math.round(v2_total).toLocaleString() + " 元 (" + (totalAsset_total > 0 ? (v2_total/totalAsset_total*100).toFixed(1) : 0) + "%)";
+        document.getElementById('output3').innerText = Math.round(v3_total).toLocaleString() + " 元 (" + (totalAsset_total > 0 ? (v3_total/totalAsset_total*100).toFixed(1) : 0) + "%)";
+        document.getElementById('outputCash').innerText = Math.round(cash_total).toLocaleString() + " 元 (" + (totalAsset_total > 0 ? (cash_total/totalAsset_total*100).toFixed(1) : 0) + "%)";
+
+        document.getElementById('resTotalAssetBase').innerText = Math.round(totalAsset_base).toLocaleString() + " 元";
+        document.getElementById('resTotalAssetTotal').innerText = Math.round(totalAsset_total).toLocaleString() + " 元";
+        document.getElementById('resCurrentBetaBase').innerText = currentBeta_base.toFixed(4);
+        document.getElementById('resCurrentBetaTotal').innerText = currentBeta_total.toFixed(4);
+
+        let targetBeta = (r1 * lev1) + (r2 * lev2) + (r3 * lev3);
+        document.getElementById('resTargetBeta').innerText = targetBeta.toFixed(2);
+
+        let upperBeta = targetBeta * (1 + betaOffset);
+        let lowerBeta = targetBeta * (1 - betaOffset);
+        document.getElementById('resLowerBeta').innerText = lowerBeta.toFixed(4);
+        document.getElementById('resUpperBeta').innerText = upperBeta.toFixed(4);
+
+        let actionText = ""; let actionBadge = "";
+        let adviceHTML = `<div style="font-weight:bold; margin-bottom:8px; color:var(--warning);">📋 系統即時精確零股交易指引 (基於原持股庫存)：</div>`;
+
+        if (totalAsset_base === 0 && totalAsset_total === 0) {
+            actionText = "無資產數據";
+            actionBadge = `<span class="badge badge-none" style="background:#555;">等待輸入資產</span>`;
+            adviceHTML = `💡 <b>【系統開局提示】</b>目前面板總資產為 0。請勾選「啟用沙盒模擬連動」功能進行即時全自動開局。`;
+            document.getElementById('btnSettleTrades').style.display = "none";
+        } else {
+            if (currentBeta_base <= lowerBeta) { actionText = "買股再平衡"; actionBadge = `<span class="badge badge-buy">組合偏低-建議加碼</span>`; }
+            else if (currentBeta_base >= upperBeta) { actionText = "賣股再平衡"; actionBadge = `<span class="badge badge-sell">組合過熱-建議減碼</span>`; }
+            else { actionText = "不需再平衡"; actionBadge = `<span class="badge badge-none">安全觀望-不需再平衡</span>`; }
+
+            let assets = [
+                { id: n1, ratio: r1, val: v1_base, price: p1 },
+                { id: n2, ratio: r2, val: v2_base, price: p2 },
+                { id: n3, ratio: r3, val: v3_base, price: p3 }
+            ];
+            
+            assets.forEach((asset, idx) => {
+                if(asset.ratio === 0 && asset.val === 0) return;
+                let targetVal = totalAsset_base * asset.ratio;
+                let diffCash = targetVal - asset.val;
+                let exactDiffShares = asset.price > 0 ? Math.round(diffCash / asset.price) : 0;
+                
+                systemSuggestedTrades[idx] = (actionText !== "不需再平衡") ? exactDiffShares : 0;
+
+                if (actionText !== "不需再平衡") {
+                    if (exactDiffShares !== 0) {
+                        let rawValue = Math.abs(exactDiffShares) * asset.price;
+                        let fee = Math.max(Math.round(rawValue * 0.001425 * (discount/10)), minFeeSetting);
+                        let tax = (exactDiffShares < 0) ? Math.floor(rawValue * taxRateSetting) : 0;
+                        let netSettlement = exactDiffShares > 0 ? (rawValue + fee) : (rawValue - fee - tax);
+
+                        adviceHTML += `🔹 <b>${asset.id}</b>：建議 <span class="${exactDiffShares > 0 ? 'text-up':'text-down'}">${exactDiffShares > 0 ? '買進':'賣出'} ${Math.abs(exactDiffShares).toLocaleString()} 股</span>` +
+                                      ` (交割淨額: ${Math.round(netSettlement).toLocaleString()} 元 | 內含手續費: ${fee}元 ${exactDiffShares < 0 ? '/ 交易稅: '+tax+'元' : ''})<br>`;
+                    } else {
+                        adviceHTML += `🔹 <b>${asset.id}</b>：<span class="highlight-text">需要偏離調節</span>，但因目前現價過高，換算不滿 1 股，可手動於【B】欄微調股數。<br>`;
+                    }
+                } else {
+                    adviceHTML += `🔹 <b>${asset.id}</b>：比例正常，<span class="text-none">無需調整 (0股)</span><br>`;
+                }
+            });
+
+            let rTotalCheck = parseFloat(document.getElementById('ratio1').value || 0) + parseFloat(document.getElementById('ratio2').value || 0) + parseFloat(document.getElementById('ratio3').value || 0) + parseFloat(document.getElementById('ratioCash').value || 0);
+            if (Math.abs(rTotalCheck - 100) > 0.02) {
+                adviceHTML = `⚠️ <b>【系統暫停指引】</b>目前配置比例加總不等於 100%。請先調整使其平衡，系統才能計算。`;
+                document.getElementById('btnSettleTrades').style.display = "none";
+            } else if(actionText === "不需再平衡") {
+                adviceHTML = `✅ <b>【資產安全】</b>目前原庫存整體加權 Beta 值 (${currentBeta_base.toFixed(3)}) 處於設定的安全波動區間 (${lowerBeta.toFixed(2)} ~ ${upperBeta.toFixed(2)}) 內。無需交易！`;
+                document.getElementById('btnSettleTrades').style.display = "none";
+            } else {
+                document.getElementById('btnSettleTrades').style.display = (s1_trade !== 0 || s2_trade !== 0 || s3_trade !== 0) ? "block" : "none";
+            }
+        }
+
+        document.getElementById('resAction').innerHTML = actionBadge;
+        document.getElementById('rebalanceAdvice').innerHTML = adviceHTML;
+        document.getElementById('rebalanceAdvice').style.display = "block";
+        document.getElementById('addLogBtn').style.display = "block";
+
+        window.latestFinalSettleData = {
+            s1: s1_total, s2: s2_total, s3: s3_total, cash: cash_total, totalAsset: totalAsset_total, initCapital: initCapital,
+            p1: p1, p2: p2, p3: p3 
+        };
+    }
+
+    function autoFillSuggestedTrades() {
+        document.getElementById('shares1_trade').value = systemSuggestedTrades[0];
+        document.getElementById('shares2_trade').value = systemSuggestedTrades[1];
+        document.getElementById('shares3_trade').value = systemSuggestedTrades[2];
+        checkRatiosTotal();
+    }
+
+    function settleAndSaveJournal() {
+        let d = window.latestFinalSettleData;
+        if(!d) return;
+
+        let customDate = document.getElementById('journalDate').value || "無日期";
+
+        if (confirm(`💾 您確定已完成實際下單動作，要以日期 [${customDate}] 正式結算嗎？`)) {
+            document.getElementById('shares1_base').value = d.s1;
+            document.getElementById('shares2_base').value = d.s2;
+            document.getElementById('shares3_base').value = d.s3;
+            document.getElementById('currentCash_base').value = Math.round(d.cash);
+
+            document.getElementById('shares1_trade').value = 0;
+            document.getElementById('shares2_trade').value = 0;
+            document.getElementById('shares3_trade').value = 0;
+
+            historyLogs.unshift({
+                date: customDate, 
+                s1: d.s1, p1: d.p1,
+                s2: d.s2, p2: d.p2,
+                s3: d.s3, p3: d.p3,
+                cash: d.cash, totalAsset: d.totalAsset, initCapital: d.initCapital
+            });
+            localStorage.setItem('multi_rebalance_logs_v22', JSON.stringify(historyLogs));
+
+            saveCurrentSettingsSilently();
+            renderHistoryTable();
+            checkRatiosTotal();
+
+            alert("🎉 帳目結轉成功！大歷史對帳本已成功記錄本次數據。");
+        }
+    }
+
+    function initializeAssetsFromCapital(showAlert) {
+        let r1 = parseFloat(document.getElementById('ratio1').value) || 0;
+        let r2 = parseFloat(document.getElementById('ratio2').value) || 0;
+        let r3 = parseFloat(document.getElementById('ratio3').value) || 0;
+        let rCash = parseFloat(document.getElementById('ratioCash').value) || 0;
+        if (Math.abs(r1 + r2 + r3 + rCash - 100) > 0.02) { 
+            if(showAlert) alert("❌ 比例總和不等於 100%，無法分配！請先平衡配置比例。"); 
+            return; 
+        }
+
+        let initCapital = parseFloat(document.getElementById('initCapital').value) || 0;
+        let p1 = parseFloat(document.getElementById('price1').value) || 0;
+        let p2 = parseFloat(document.getElementById('price2').value) || 0;
+        let p3 = parseFloat(document.getElementById('price3').value) || 0;
+
+        let s1 = p1 > 0 ? Math.round((initCapital * (r1 / 100)) / p1) : 0;
+        let s2 = p2 > 0 ? Math.round((initCapital * (r2 / 100)) / p2) : 0;
+        let s3 = p3 > 0 ? Math.round((initCapital * (r3 / 100)) / p3) : 0;
+
+        let totalSpent = (s1 * p1) + (s2 * p2) + (s3 * p3);
+        let remainingCash = initCapital - totalSpent;
+
+        document.getElementById('shares1_base').value = s1;
+        document.getElementById('shares2_base').value = s2;
+        document.getElementById('shares3_base').value = s3;
+        document.getElementById('currentCash_base').value = Math.max(0, Math.round(remainingCash));
+        
+        if(showAlert) {
+            document.getElementById('shares1_trade').value = 0;
+            document.getElementById('shares2_trade').value = 0;
+            document.getElementById('shares3_trade').value = 0;
+            alert(`🔄 初始原持股庫存已成功依配置比例分配完畢！`);
+        }
+    }
+
+    function saveCurrentSettings() {
+        saveCurrentSettingsSilently();
+        alert("💾 目前所有自訂數據、配置資料與歷史大帳本已成功儲存。");
+    }
+
+    function saveCurrentSettingsSilently() {
+        let settings = {
+            initCapital: document.getElementById('initCapital').value,
+            betaOffset: document.getElementById('betaOffset').value,
+            name1: document.getElementById('name1').value, ratio1: document.getElementById('ratio1').value, price1: document.getElementById('price1').value, shares1_base: document.getElementById('shares1_base').value, lev1: document.getElementById('lev1').value,
+            name2: document.getElementById('name2').value, ratio2: document.getElementById('ratio2').value, price2: document.getElementById('price2').value, shares2_base: document.getElementById('shares2_base').value, lev2: document.getElementById('lev2').value,
+            name3: document.getElementById('name3').value, ratio3: document.getElementById('ratio3').value, price3: document.getElementById('price3').value, shares3_base: document.getElementById('shares3_base').value, lev3: document.getElementById('lev3').value,
+            ratioCash: document.getElementById('ratioCash').value,
+            currentCash_base: document.getElementById('currentCash_base').value,
+            brokerDiscount: document.getElementById('brokerDiscount').value,
+            taxRate: document.getElementById('taxRate').value,
+            minFee: document.getElementById('minFee').value,
+            sandboxMode: document.getElementById('sandboxMode').checked,
+            guideOpen: (document.getElementById('collapsibleGuide').style.display === 'block'),
+            journalDate: document.getElementById('journalDate').value
+        };
+        localStorage.setItem('multi_rebalance_settings_v22', JSON.stringify(settings));
+    }
+
+    function loadSavedSettings() {
+        let saved = localStorage.getItem('multi_rebalance_settings_v22');
+        if (saved) {
+            let s = JSON.parse(saved);
+            document.getElementById('initCapital').value = s.initCapital;
+            document.getElementById('betaOffset').value = s.betaOffset;
+            if(s.name1) document.getElementById('name1').value = s.name1;
+            document.getElementById('ratio1').value = s.ratio1; document.getElementById('price1').value = s.price1; document.getElementById('shares1_base').value = s.shares1_base;
+            if(s.lev1) document.getElementById('lev1').value = s.lev1;
+            if(s.name2) document.getElementById('name2').value = s.name2;
+            document.getElementById('ratio2').value = s.ratio2; document.getElementById('price2').value = s.price2; document.getElementById('shares2_base').value = s.shares2_base;
+            if(s.lev2) document.getElementById('lev2').value = s.lev2;
+            if(s.name3) document.getElementById('name3').value = s.name3;
+            document.getElementById('ratio3').value = s.ratio3; document.getElementById('price3').value = s.price3; document.getElementById('shares3_base').value = s.shares3_base;
+            if(s.lev3) document.getElementById('lev3').value = s.lev3;
+            if(s.ratioCash) document.getElementById('ratioCash').value = s.ratioCash;
+            document.getElementById('currentCash_base').value = s.currentCash_base;
+            if(s.brokerDiscount) document.getElementById('brokerDiscount').value = s.brokerDiscount;
+            if(s.taxRate) document.getElementById('taxRate').value = s.taxRate;
+            if(s.minFee) document.getElementById('minFee').value = s.minFee;
+            if(s.hasOwnProperty('sandboxMode')) document.getElementById('sandboxMode').checked = s.sandboxMode;
+            if(s.journalDate) document.getElementById('journalDate').value = s.journalDate;
+            
+            if(s.guideOpen) {
+                document.getElementById('collapsibleGuide').style.display = 'block';
+                let btn = document.getElementById('guideToggleBtn');
+                btn.innerText = '收合詳細實戰步驟與回測 SOP 指南 ▴';
+                btn.style.color = 'var(--warning)';
+                btn.style.borderColor = 'var(--warning)';
+                btn.style.background = 'rgba(241, 196, 15, 0.05)';
+            }
+        }
+        renderHistoryTable();
+    }
+
+    function addHistoryLog() {
+        let d = window.latestFinalSettleData;
+        if(!d) return;
+        let customDate = document.getElementById('journalDate').value || "無日期";
+        historyLogs.unshift({
+            date: customDate, s1: d.s1, p1: d.p1, s2: d.s2, p2: d.p2, s3: d.s3, p3: d.p3, cash: d.cash, totalAsset: d.totalAsset, initCapital: d.initCapital
+        });
+        localStorage.setItem('multi_rebalance_logs_v22', JSON.stringify(historyLogs));
+        renderHistoryTable();
+        alert("📊 歷史快照紀錄成功！");
+    }
+
+    function deleteLog(index) {
+        if(confirm("確定要刪除這筆投組歷史紀錄嗎？")) {
+            historyLogs.splice(index, 1);
+            localStorage.setItem('multi_rebalance_logs_v22', JSON.stringify(historyLogs));
+            renderHistoryTable();
+        }
+    }
+
+    function renderHistoryTable() {
+        let body = document.getElementById('logTableBody');
+        body.innerHTML = "";
+        if(historyLogs.length === 0) {
+            body.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--text-muted);">目前尚無歷史紀錄。</td></tr>`;
+            return;
+        }
+        historyLogs.forEach((log, index) => {
+            let profit = log.totalAsset - log.initCapital;
+            let roi = log.initCapital > 0 ? (profit / log.initCapital * 100) : 0;
+            let pClass = profit >= 0 ? "text-up" : "text-down";
+            
+            let displayS1 = log.s1 > 0 ? `${log.s1.toLocaleString()} 股<br><span style='color:var(--info);font-size:0.75rem;'>@${log.p1 ? log.p1.toLocaleString() : '0'}元</span>` : "0 股";
+            let displayS2 = log.s2 > 0 ? `${log.s2.toLocaleString()} 股<br><span style='color:var(--info);font-size:0.75rem;'>@${log.p2 ? log.p2.toLocaleString() : '0'}元</span>` : "0 股";
+            let displayS3 = log.s3 > 0 ? `${log.s3.toLocaleString()} 股<br><span style='color:var(--info);font-size:0.75rem;'>@${log.p3 ? log.p3.toLocaleString() : '0'}元</span>` : "0 股";
+
+            let row = document.createElement('tr');
+            row.innerHTML = `
+                <td><span style='color:var(--sandbox-color); font-weight:bold;'>${log.date}</span></td>
+                <td>${displayS1}</td>
+                <td>${displayS2}</td>
+                <td>${displayS3}</td>
+                <td>${Math.round(log.cash).toLocaleString()} 元</td>
+                <td style="font-weight:bold; color:var(--primary);">${Math.round(log.totalAsset).toLocaleString()} 元</td>
+                <td class="${pClass}">${profit >= 0 ? '+':''}${Math.round(profit).toLocaleString()} 元</td>
+                <td class="${pClass}">${profit >= 0 ? '+':''}${roi.toFixed(2)} %</td>
+                <td><button class="btn-delete" onclick="deleteLog(${index})">刪除</button></td>
+            `;
+            body.appendChild(row);
+        });
+    }
+</script>
+
+</body>
+</html> 
