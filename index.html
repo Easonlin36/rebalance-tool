@@ -175,6 +175,15 @@
         button.btn-delete { background-color: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 4px 8px; font-size: 0.8rem; border-radius: 3px; }
         button.btn-delete:hover { background-color: var(--danger); color: #fff; }
     </style>
+<!-- 引入 PWA Manifest -->
+<link rel="manifest" href="manifest.json">
+<!-- 設定手機狀態列顏色 -->
+<meta name="theme-color" content="#4caf50">
+<!-- 蘋果 iOS 專用網頁 App 設定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="多資產計算機">
+<link rel="apple-touch-icon" href="https://placehold.co/192x192/4caf50/white?text=計算機">
 </head>
 <body>
 
@@ -822,5 +831,14 @@
     }
 </script>
 
+        <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then((reg) => console.log('Service Worker 註冊成功！範圍：', reg.scope))
+        .catch((err) => console.log('Service Worker 註冊失敗：', err));
+    });
+  }
+</script>
 </body>
 </html> 
